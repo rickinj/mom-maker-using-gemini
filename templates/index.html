@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Meeting Transcriber & MoM Generator</title>
+
+  <style>
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: linear-gradient(135deg, #f3f4f7, #dfe6f1);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    h2 {
+      text-align: center;
+      color: #1976d2;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      margin-top: 18px;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    input[type="file"], textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: none;
+      overflow: hidden;
+      min-height: 120px;
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 12px 22px;
+      border: none;
+      background: #1976d2;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    .btn:disabled {
+      background: #9fbbe6;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .output-section {
+      margin-top: 25px;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+      animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    /* Markdown render styling */
+    .markdown-box {
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+      line-height: 1.6;
+    }
+
+    .markdown-box h2 {
+      color: #1976d2;
+      margin-top: 0;
+    }
+
+    .markdown-box ul {
+      padding-left: 20px;
+    }
+
+    .markdown-box strong {
+      color: #000;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>🎧 Meeting Transcriber & MoM Generator</h2>
+
+    <form id="uploadForm">
+      <div class="field">
+        <label for="audio">Select Audio File</label>
+        <input type="file" id="audio" name="audio" accept="audio/*" required>
+      </div>
+      <button class="btn" type="submit" id="uploadBtn">Upload & Generate MoM</button>
+    </form>
+
+    <div id="status"></div>
+
+    <div id="results" class="output-section" style="display:none;">
+      <div class="field">
+        <label>Minutes of Meeting (MoM)</label>
+        <div id="mom" class="markdown-box"></div>
+      </div>
+
+      <div class="field">
+        <label>Full Transcript</label>
+        <textarea id="transcript" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Markdown Renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const statusDiv = document.getElementById('status');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const resultsDiv = document.getElementById('results');
+    const momBox = document.getElementById('mom');
+    const transcriptBox = document.getElementById('transcript');
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = document.getElementById('audio').files[0];
+      if (!file) {
+        alert('Please choose an audio file.');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('audio', file);
+
+      statusDiv.innerHTML = "⏳ Processing... please wait.";
+      uploadBtn.disabled = true;
+      resultsDiv.style.display = "none";
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: fd
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.status !== "ok") {
+          statusDiv.innerHTML = `<span style="color:red;">❌ Error: ${data.message || "Unknown error"}</span>`;
+          return;
+        }
+
+        const result = data.data.result || {};
+
+        statusDiv.innerHTML = `<span style="color:green;">✅ Transcription & MoM Ready!</span>`;
+        resultsDiv.style.display = "block";
+
+        /* Render Markdown → HTML */
+        momBox.innerHTML = marked.parse(result.mom || "");
+
+        /* Transcript stays plain text */
+        transcriptBox.value = result.transcript || "";
+        autoResize(transcriptBox);
+
+      } catch (err) {
+        statusDiv.innerHTML = `<span style="color:red;">⚠️ Error: ${err.message}</span>`;
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
