@@ -57,6 +57,7 @@ An end-to-end **Generative AI–powered Minutes of Meeting (MoM)** system that c
 ## 📂 Project Structure
 
     ├── app.py # Flask backend
+    ├── table_creator.py # Table Creation
     ├── mom_audio_processing.py # Audio → Gemini → MoM pipeline
     ├── templates/
     │ └── index.html # Frontend UI
@@ -165,7 +166,6 @@ This enables:
 ## ▶️ Running the Project Locally
 
 ```bash
-pip install -r requirements.txt
 python app.py
 ```
 
