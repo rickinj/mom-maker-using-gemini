@@ -95,9 +95,10 @@ GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
 3. Gemini returns output in a delimiter-based format:
 
 ---TRANSCRIPT---
-...
+
+
 ---MOM---
-...
+
 
 
 4. Backend safely parses the output
@@ -117,6 +118,8 @@ GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
 Instead of relying on strict JSON output from the LLM (which often fails for long transcripts), this project uses explicit delimiters:
 
 ---TRANSCRIPT---
+
+
 ---MOM---
 
 
